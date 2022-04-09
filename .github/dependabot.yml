@@ -9,7 +9,7 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/src/"
     schedule:
       interval: "daily"
     # Always increase the version requirement
