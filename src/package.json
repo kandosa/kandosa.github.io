@@ -16,7 +16,7 @@
     "optimize-css-assets-webpack-plugin": "^6.0.1",
     "sass-loader": "^16.0.5",
     "style-loader": "^4.0.0",
-    "webpack": "^5.95.0",
+    "webpack": "^5.101.3",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
