@@ -1,14 +1,14 @@
 const path = require('path');
-const TerserJSPlugin = require('terser-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
   watch: true,
   // https://webpack.js.org/plugins/mini-css-extract-plugin/#minimizing-for-production
   optimization: {
-    minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+    minimizer: [new TerserPlugin({}), new CssMinimizerPlugin({})],
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -18,18 +18,18 @@ module.exports = {
     rules: [{
       test: /\.scss$/,
       use: [
-          MiniCssExtractPlugin.loader,
-          {
-            loader: 'css-loader'
-          },
-          {
-            loader: 'sass-loader',
-            options: {
-              sourceMap: true,
-              // options...
-            }
+        MiniCssExtractPlugin.loader,
+        {
+          loader: 'css-loader'
+        },
+        {
+          loader: 'sass-loader',
+          options: {
+            sourceMap: true,
+            // options...
           }
-        ]
+        }
+      ]
     }]
   },
   plugins: [
