@@ -1,0 +1,63 @@
+# Auto-approve and auto-enable native auto-merge for dependency PRs (Dependabot / Renovate)
+# - Approves PRs opened by allowed bots
+# - Enables GitHub native auto-merge so the PR merges when checks and branch-protection requirements pass
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
+
+jobs:
+  approve-and-enable-auto-merge:
+    # only run for dependency bots (update list as needed)
+    if: contains(['dependabot[bot]', 'renovate[bot]'], github.actor)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed for merging
+      pull-requests: write  # needed to approve and enable auto-merge
+      checks: read
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          # ensure we checkout the repository default ref (base branch)
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Approve pull request and enable native auto-merge
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            const allowed = ['dependabot[bot]', 'renovate[bot]']; // modify if you use a different bot
+            if (!allowed.includes(author)) {
+              console.log(`Skipping approval: author ${author} not in allowed list.`);
+              return;
+            }
+
+            // Create an approval review
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              event: 'APPROVE'
+            });
+            console.log(`Approved PR #${pr.number} (author: ${author}).`);
+
+            // Try to enable GitHub native auto-merge using GraphQL
+            try {
+              await github.graphql(`
+                mutation ($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: $mergeMethod}) {
+                    pullRequest { number }
+                  }
+                }
+              `, {
+                pullRequestId: pr.node_id,
+                mergeMethod: 'SQUASH'
+              });
+
+              console.log(`Enabled native auto-merge for PR #${pr.number}.`);
+            } catch (err) {
+              console.log('Failed to enable native auto-merge:', err.message || err);
+              // don't fail the workflow if enabling auto-merge isn't allowed
+            }
